@@ -1,0 +1,35 @@
+{
+  "name": "arbitrage-bot-uni-sushi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0",
+    "@sushiswap/sdk": "*",
+    "@uniswap/sdk": "^3.0.3",
+    "colors": "^1.4.0",
+    "dotenv": "^8.2.0",
+    "ethers": "^5.1.4",
+    "graphql": "^15.5.0",
+    "graphql-request": "^3.4.0",
+    "nodemon": "^2.0.7",
+    "web3": "^1.3.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^7.25.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "prettier": "^2.2.1"
+  }
+}
