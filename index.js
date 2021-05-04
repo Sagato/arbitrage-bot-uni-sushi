@@ -16,7 +16,7 @@ const wallet = new Wallet(process.env.PRIVATE_KEY, provider)
 const chainId = ChainId.MAINNET
 
 const ONE_WEI = web3.utils.toBN(web3.utils.toWei('1'))
-const ETHEREUM_AMOUNT = web3.utils.toBN(web3.utils.toWei('10'))
+const ETHEREUM_AMOUNT = web3.utils.toBN(web3.utils.toWei('5'))
 // const arbitrage = new Contract(Arbitrage.networks[ChainId], Arbitrage.abi)
 
 // Getting populated by interval every 15 seconds
@@ -51,9 +51,10 @@ const getAllTokens = async () => {
         first: 1000
         orderBy: reserveUSD
         orderDirection: desc
-        where: { reserveUSD_gt: 1000000 }
+        where: { volumeUSD_gte: 20000000 }
       ) {
         id
+        volumeUSD
         reserveUSD
         token0 {
           id
@@ -79,7 +80,11 @@ const getAllTokens = async () => {
       .filter((pair) =>
         tokensUniswap.pairs.some((p) => p.token0.id === pair.token0.id)
       )
-      .map((p) => p.token0)
+      .map((p) => ({
+        ...p.token0,
+        volumeUSD: p.volumeUSD,
+        reserveUSD: p.reserveUSD
+      }))
 
     console.log(`observing ${filteredTokens.length} tokens`)
 
@@ -147,13 +152,6 @@ const initArbitrage = async () => {
             tokenAmountSushi[0].raw.toString()
           )
 
-          const uniTokensAfterFee = tokensUniBN
-            .mul(web3.utils.toBN('997'))
-            .div(web3.utils.toBN('1000'))
-          const sushiTokensAfterFee = tokensSushiBN
-            .mul(web3.utils.toBN('997'))
-            .div(web3.utils.toBN('1000'))
-
           const ethAmountUni = uniPair.getOutputAmount(
             new TokenAmount(tkn, tokensSushiBN)
           )
@@ -165,25 +163,20 @@ const initArbitrage = async () => {
           console.log(
             `${
               `Calc ${tkn.symbol.toUpperCase()}`.blue
-            }\nLiquidity Reserves:       ${web3.utils.fromWei(
-              web3.utils
-                .toBN(uniPair.reserve0.raw.toString())
-                .mul(
-                  web3.utils
-                    .toBN(uniPair.reserve1.raw.toString())
-                    .mul(ETHEREUM_AMOUNT)
-                    .div(ONE_WEI)
-                )
-            )} \n[UNI] Tokens after fee:   ${web3.utils.fromWei(
-              uniTokensAfterFee
-            )}\n[SUSHI] Tokens after fee: ${web3.utils.fromWei(
-              sushiTokensAfterFee
-            )}`.blue
+            }\nReserves USD:             ${
+              token.reserveUSD
+            }\nVolume USD:               ${
+              token.volumeUSD
+            } \n[UNI] Tokens after fee:   ${web3.utils.fromWei(
+              tokensUniBN
+            )}\n[SUSHI] Tokens after fee: ${web3.utils.fromWei(tokensSushiBN)}`
+              .blue
           )
           console.log(
-            `ETH after Arb:    ${web3.utils.fromWei(
-              ethAmountUni[0].raw.toString()
-            )}\n`.red
+            `ETH from UNI:             ${web3.utils.fromWei(
+              ETHEREUM_AMOUNT
+            )}\nETH after Arb:            ${web3.utils.fromWei(ethAmountUni)}\n`
+              .red
           )
 
           if (ethOnUniAfterArbitrageInWei.gt(ETHEREUM_AMOUNT)) {
@@ -199,8 +192,6 @@ const initArbitrage = async () => {
         }
       })
     )
-
-    checkArbitrageOpportunity(wethPairs)
   })
 
   provider.on('error', (error) => {
